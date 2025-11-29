@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
@@ -34,9 +33,20 @@ const PreBudgetView: React.FC<PreBudgetViewProps> = ({ appContext }) => {
 
     const volume = useMemo(() => {
         const { width, length, depth } = formData;
-        if (width && length && depth) {
-            return parseFloat(width) * parseFloat(length) * parseFloat(depth) * 1000;
+
+        const normalize = (v: string) => {
+            if (!v) return 0;
+            return parseFloat(v.replace(',', '.'));
+        };
+
+        const w = normalize(width);
+        const l = normalize(length);
+        const d = normalize(depth);
+
+        if (w > 0 && l > 0 && d > 0) {
+            return w * l * d * 1000;
         }
+
         return 0;
     }, [formData.width, formData.length, formData.depth]);
 
@@ -94,9 +104,9 @@ const PreBudgetView: React.FC<PreBudgetViewProps> = ({ appContext }) => {
                     zip: formData.zip,
                 },
                 poolDimensions: {
-                    width: parseFloat(formData.width),
-                    length: parseFloat(formData.length),
-                    depth: parseFloat(formData.depth),
+                    width: parseFloat(formData.width.replace(',', '.')),
+                    length: parseFloat(formData.length.replace(',', '.')),
+                    depth: parseFloat(formData.depth.replace(',', '.')),
                 },
                 poolVolume: volume,
                 hasWellWater: options.hasWellWater,
@@ -159,9 +169,9 @@ const PreBudgetView: React.FC<PreBudgetViewProps> = ({ appContext }) => {
                 <fieldset className="border p-4 rounded-md dark:border-gray-600">
                     <legend className="px-2 font-semibold text-gray-700 dark:text-gray-300">Dimensões da Piscina (metros)</legend>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
-                        <Input label="Largura" name="width" type="number" value={formData.width} onChange={handleInputChange} required placeholder="ex: 4" />
-                        <Input label="Comprimento" name="length" type="number" value={formData.length} onChange={handleInputChange} required placeholder="ex: 8" />
-                        <Input label="Profundidade Média" name="depth" type="number" value={formData.depth} onChange={handleInputChange} required placeholder="ex: 1.4" />
+                        <Input label="Largura" name="width" type="text" value={formData.width} onChange={handleInputChange} required placeholder="ex: 4 ou 4,5" />
+                        <Input label="Comprimento" name="length" type="text" value={formData.length} onChange={handleInputChange} required placeholder="ex: 8 ou 8,5" />
+                        <Input label="Profundidade Média" name="depth" type="text" value={formData.depth} onChange={handleInputChange} required placeholder="ex: 1,4" />
                     </div>
                      {volume > 0 && <p className="text-center mt-2 text-lg font-medium text-secondary-600 dark:text-secondary-400">Volume: {volume.toLocaleString('pt-BR')} litros</p>}
                 </fieldset>
