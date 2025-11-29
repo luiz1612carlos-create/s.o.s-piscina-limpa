@@ -14,7 +14,7 @@ interface ReportsViewProps {
 }
 
 const ReportsView: React.FC<ReportsViewProps> = ({ appContext }) => {
-    const { clients, orders, preBudgets, products, loading, resetAllData } = appContext;
+    const { clients, orders, preBudgets, products, loading, resetReportsData } = appContext;
 
     const stats = useMemo(() => {
         const activeClients = clients.filter(c => c.clientStatus === 'Ativo');
@@ -64,7 +64,7 @@ const ReportsView: React.FC<ReportsViewProps> = ({ appContext }) => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-3xl font-bold">Relatórios e Insights</h2>
-                <Button variant="danger" size="sm" onClick={resetAllData}>
+                <Button variant="danger" size="sm" onClick={resetReportsData}>
                     <TrashIcon className="w-4 h-4 mr-2" />
                     Resetar Dados
                 </Button>

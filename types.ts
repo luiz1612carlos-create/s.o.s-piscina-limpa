@@ -216,7 +216,7 @@ export interface AppData {
     getClientData: () => Promise<Client | null>;
     createInitialAdmin: (name: string, email: string, pass: string) => Promise<void>;
     updateReplenishmentQuoteStatus: (quoteId: string, status: ReplenishmentQuoteStatus) => Promise<void>;
-    resetAllData: () => Promise<void>;
+    resetReportsData: () => Promise<void>;
 }
 
 export type AdminView = 'reports' | 'clients' | 'routes' | 'approvals' | 'store' | 'settings';

@@ -406,13 +406,14 @@ export const useAppData = (user: any | null, userData: UserData | null): AppData
         }
     }, [user, userData]);
 
-    const resetAllData = async () => {
-        if (!window.confirm("Você tem certeza que deseja resetar TODOS os dados? Esta ação é irreversível e irá apagar clientes, orçamentos, pedidos, produtos e rotas.")) {
+    const resetReportsData = async () => {
+        if (!window.confirm("Você tem certeza? Esta ação irá apagar todos os dados de relatórios (orçamentos, pedidos, sugestões de reposição e rotas), mas irá PRESERVAR seus clientes e produtos. Esta ação é irreversível.")) {
             return;
         }
 
         try {
-            const collectionsToDelete = ['clients', 'pre-budgets', 'orders', 'products', 'replenishmentQuotes'];
+            // SAFE: Only deletes transactional data. Clients and Products are preserved.
+            const collectionsToDelete = ['pre-budgets', 'orders', 'replenishmentQuotes'];
             for (const collectionName of collectionsToDelete) {
                 const snapshot = await db.collection(collectionName).get();
                 const batch = db.batch();
@@ -425,7 +426,7 @@ export const useAppData = (user: any | null, userData: UserData | null): AppData
             // Reset routes
             await db.collection('routes').doc('main').set({});
             
-            alert('Todos os dados foram resetados com sucesso.');
+            alert('Dados de relatórios foram resetados com sucesso.');
         } catch (error) {
             console.error("Erro ao resetar os dados:", error);
             alert('Ocorreu um erro ao resetar os dados.');
@@ -440,6 +441,6 @@ export const useAppData = (user: any | null, userData: UserData | null): AppData
         scheduleClient, unscheduleClient, toggleRouteStatus, saveProduct, deleteProduct,
         updateOrderStatus, updateSettings, createPreBudget, createOrder, getClientData,
         updateReplenishmentQuoteStatus,
-        resetAllData,
+        resetReportsData,
     };
 };
