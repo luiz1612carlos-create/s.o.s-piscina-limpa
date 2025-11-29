@@ -1,6 +1,8 @@
+
 export interface UserData {
     uid: string;
     email: string;
+    name: string;
     role: 'admin' | 'client';
 }
 
@@ -10,6 +12,7 @@ export type PaymentStatus = 'Pago' | 'Pendente' | 'Atrasado';
 export type PoolUsageStatus = 'Livre para uso' | 'Em tratamento';
 export type PreBudgetStatus = 'pending' | 'approved' | 'rejected';
 export type OrderStatus = 'Pendente' | 'Enviado' | 'Entregue';
+export type ReplenishmentQuoteStatus = 'suggested' | 'sent' | 'approved' | 'rejected';
 
 export interface Address {
     street: string;
@@ -114,6 +117,17 @@ export interface Order {
     createdAt: any; // Firestore Timestamp
 }
 
+export interface ReplenishmentQuote {
+    id: string;
+    clientId: string;
+    clientName: string;
+    items: CartItem[];
+    total: number;
+    status: ReplenishmentQuoteStatus;
+    createdAt: any;
+    updatedAt: any;
+}
+
 export interface Settings {
     companyName: string;
     mainTitle: string;
@@ -145,6 +159,9 @@ export interface Settings {
         storeEnabled: boolean;
         advancePaymentPlanEnabled: boolean;
     };
+    automation: {
+        replenishmentStockThreshold: number;
+    };
 }
 
 export type NotificationType = 'success' | 'error' | 'info';
@@ -169,6 +186,7 @@ export interface AppData {
     unscheduledClients: Client[];
     products: Product[];
     orders: Order[];
+    replenishmentQuotes: ReplenishmentQuote[];
     settings: Settings | null;
     loading: {
         clients: boolean;
@@ -177,6 +195,7 @@ export interface AppData {
         products: boolean;
         orders: boolean;
         settings: boolean;
+        replenishmentQuotes: boolean;
     };
     setupCheck: 'checking' | 'needed' | 'done';
     approveBudget: (budgetId: string) => Promise<void>;
@@ -195,5 +214,9 @@ export interface AppData {
     createPreBudget: (budget: Omit<PreBudget, 'id' | 'status' | 'createdAt'>) => Promise<void>;
     createOrder: (order: Omit<Order, 'id' | 'createdAt'>) => Promise<void>;
     getClientData: () => Promise<Client | null>;
-    createInitialAdmin: (email: string, pass: string) => Promise<void>;
+    createInitialAdmin: (name: string, email: string, pass: string) => Promise<void>;
+    updateReplenishmentQuoteStatus: (quoteId: string, status: ReplenishmentQuoteStatus) => Promise<void>;
+    resetAllData: () => Promise<void>;
 }
+
+export type AdminView = 'reports' | 'clients' | 'routes' | 'approvals' | 'store' | 'settings';

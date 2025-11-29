@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
@@ -11,6 +10,7 @@ interface SetupViewProps {
 
 const SetupView: React.FC<SetupViewProps> = ({ appContext }) => {
     const { createInitialAdmin, showNotification, settings } = appContext;
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -23,9 +23,8 @@ const SetupView: React.FC<SetupViewProps> = ({ appContext }) => {
         }
         setIsLoading(true);
         try {
-            await createInitialAdmin(email, password);
+            await createInitialAdmin(name, email, password);
             // On success, the app state will change and this component will unmount.
-            // No need for a success notification here as the app will transition to the logged-in state.
         } catch (error: any) {
             console.error(error);
             showNotification(error.message || 'Falha ao criar conta de administrador.', 'error');
@@ -47,6 +46,14 @@ const SetupView: React.FC<SetupViewProps> = ({ appContext }) => {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleCreateAdmin} className="space-y-6">
+                             <Input
+                                label="Nome Completo do Administrador"
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                                placeholder="João Silva"
+                            />
                             <Input
                                 label="Email do Administrador"
                                 type="email"

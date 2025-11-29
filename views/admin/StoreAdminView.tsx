@@ -1,19 +1,20 @@
 
 import React, { useState } from 'react';
-import { AppContextType, Product, Order, OrderStatus } from '../../types';
+import { AppContextType, Product, Order, OrderStatus, ReplenishmentQuote } from '../../types';
 import { Button } from '../../components/Button';
 import { Modal } from '../../components/Modal';
 import { Input } from '../../components/Input';
 import { Spinner } from '../../components/Spinner';
-import { EditIcon, TrashIcon, PlusIcon } from '../../constants';
+import { EditIcon, TrashIcon, PlusIcon, CheckIcon, XMarkIcon } from '../../constants';
 import { Select } from '../../components/Select';
+import { Card, CardContent, CardHeader } from '../../components/Card';
 
 interface StoreAdminViewProps {
     appContext: AppContextType;
 }
 
 const StoreAdminView: React.FC<StoreAdminViewProps> = ({ appContext }) => {
-    const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
+    const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'replenishment'>('products');
 
     return (
         <div>
@@ -31,11 +32,96 @@ const StoreAdminView: React.FC<StoreAdminViewProps> = ({ appContext }) => {
                 >
                     Pedidos
                 </button>
+                 <button
+                    onClick={() => setActiveTab('replenishment')}
+                    className={`py-2 px-4 text-lg font-semibold relative ${activeTab === 'replenishment' ? 'border-b-2 border-primary-500 text-primary-500' : 'text-gray-500'}`}
+                >
+                    Sugestões de Reposição
+                    {appContext.replenishmentQuotes.filter(q => q.status === 'suggested').length > 0 && (
+                        <span className="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">{appContext.replenishmentQuotes.filter(q => q.status === 'suggested').length}</span>
+                    )}
+                </button>
             </div>
-            {activeTab === 'products' ? <ProductsManagement appContext={appContext} /> : <OrdersManagement appContext={appContext} />}
+            {activeTab === 'products' && <ProductsManagement appContext={appContext} />}
+            {activeTab === 'orders' && <OrdersManagement appContext={appContext} />}
+            {activeTab === 'replenishment' && <ReplenishmentManagement appContext={appContext} />}
         </div>
     );
 };
+
+const ReplenishmentManagement = ({ appContext }: { appContext: AppContextType }) => {
+    const { replenishmentQuotes, loading, updateReplenishmentQuoteStatus, showNotification } = appContext;
+    const [processingId, setProcessingId] = useState<string | null>(null);
+    
+    const handleSend = async (quoteId: string) => {
+        setProcessingId(quoteId);
+        try {
+            await updateReplenishmentQuoteStatus(quoteId, 'sent');
+            showNotification('Sugestão enviada ao cliente!', 'success');
+        } catch (error: any) {
+            showNotification(error.message || 'Erro ao enviar sugestão.', 'error');
+        } finally {
+            setProcessingId(null);
+        }
+    };
+    
+    const handleDiscard = async (quoteId: string) => {
+        setProcessingId(quoteId);
+        try {
+            await updateReplenishmentQuoteStatus(quoteId, 'rejected');
+            showNotification('Sugestão descartada.', 'info');
+        } catch (error: any) {
+            showNotification(error.message || 'Erro ao descartar sugestão.', 'error');
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const suggestedQuotes = replenishmentQuotes.filter(q => q.status === 'suggested');
+
+    return (
+        <div>
+             {loading.replenishmentQuotes ? (
+                <div className="flex justify-center mt-8"><Spinner size="lg" /></div>
+            ) : suggestedQuotes.length === 0 ? (
+                <p>Nenhuma sugestão de reposição gerada no momento.</p>
+            ) : (
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {suggestedQuotes.map(quote => (
+                        <Card key={quote.id}>
+                            <CardHeader>
+                                <h3 className="text-xl font-semibold">{quote.clientName}</h3>
+                                <p className="text-sm text-gray-500">Sugestão de Reposição</p>
+                            </CardHeader>
+                            <CardContent>
+                                <ul className="space-y-2">
+                                    {quote.items.map(item => (
+                                        <li key={item.id} className="flex justify-between">
+                                            <span>{item.name} x {item.quantity}</span>
+                                            <span>R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <div className="mt-4 pt-2 border-t dark:border-gray-700 text-right">
+                                    <p className="font-bold text-lg">Total: R$ {quote.total.toFixed(2)}</p>
+                                </div>
+                            </CardContent>
+                            <div className="p-4 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
+                                <Button size="sm" variant="danger" onClick={() => handleDiscard(quote.id)} isLoading={processingId === quote.id} disabled={!!processingId}>
+                                    <XMarkIcon className="w-4 h-4 mr-1"/> Descartar
+                                </Button>
+                                <Button size="sm" onClick={() => handleSend(quote.id)} isLoading={processingId === quote.id} disabled={!!processingId}>
+                                    <CheckIcon className="w-4 h-4 mr-1"/> Enviar ao Cliente
+                                </Button>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 const ProductsManagement = ({ appContext }: { appContext: AppContextType }) => {
     const { products, loading, saveProduct, deleteProduct, showNotification } = appContext;

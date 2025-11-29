@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { AppContextType, Settings } from '../../types';
+import { AppContextType, AuthContextType, Settings } from '../../types';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { Spinner } from '../../components/Spinner';
@@ -8,12 +9,18 @@ import { TrashIcon } from '../../constants';
 
 interface SettingsViewProps {
     appContext: AppContextType;
+    authContext: AuthContextType;
 }
 
-const SettingsView: React.FC<SettingsViewProps> = ({ appContext }) => {
+const SettingsView: React.FC<SettingsViewProps> = ({ appContext, authContext }) => {
     const { settings, loading, updateSettings, showNotification } = appContext;
+    const { changePassword } = authContext;
     const [localSettings, setLocalSettings] = useState<Settings | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isSavingPassword, setIsSavingPassword] = useState(false);
 
     useEffect(() => {
         if (settings) {
@@ -25,22 +32,25 @@ const SettingsView: React.FC<SettingsViewProps> = ({ appContext }) => {
         return <div className="flex justify-center items-center h-full"><Spinner size="lg" /></div>;
     }
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, section: keyof Settings, field: string) => {
-        const { value, type } = e.target;
-        setLocalSettings(prev => ({
-            ...prev!,
-            [section]: {
-                ...(prev![section] as any),
-                [field]: type === 'number' ? parseFloat(value) : value
+    const handleSimpleChange = (e: React.ChangeEvent<HTMLInputElement>, section?: keyof Settings) => {
+        const { name, value, type } = e.target;
+        const finalValue = type === 'number' ? parseFloat(value) : value;
+        
+        setLocalSettings(prev => {
+            if (!prev) return null;
+            if (section) {
+                return {
+                    ...prev,
+                    [section]: {
+                        ...(prev[section] as any),
+                        [name]: finalValue,
+                    }
+                }
             }
-        }));
+            return {...prev, [name]: finalValue };
+        });
     };
     
-    const handleSimpleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setLocalSettings(prev => ({...prev!, [name]: value}));
-    }
-
     const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         let finalValue = value;
@@ -117,6 +127,29 @@ const SettingsView: React.FC<SettingsViewProps> = ({ appContext }) => {
         }
     };
 
+    const handlePasswordChange = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (newPassword !== confirmPassword) {
+            showNotification('As senhas não coincidem.', 'error');
+            return;
+        }
+        if (newPassword.length < 6) {
+            showNotification('A senha precisa ter no mínimo 6 caracteres.', 'error');
+            return;
+        }
+        setIsSavingPassword(true);
+        try {
+            await changePassword(newPassword);
+            showNotification('Senha alterada com sucesso!', 'success');
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch(error: any) {
+            showNotification(error.message || 'Erro ao alterar a senha.', 'error');
+        } finally {
+            setIsSavingPassword(false);
+        }
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
@@ -128,10 +161,10 @@ const SettingsView: React.FC<SettingsViewProps> = ({ appContext }) => {
                 <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
                     <h3 className="text-xl font-semibold mb-4">Informações da Empresa e Tela Inicial</h3>
                     <div className="grid md:grid-cols-2 gap-4">
-                        <Input label="Nome da Empresa (para painéis)" name="companyName" value={localSettings.companyName} onChange={handleSimpleChange} />
-                        <Input label="Chave PIX Padrão" name="pixKey" value={localSettings.pixKey} onChange={handleSimpleChange} />
-                        <Input containerClassName="md:col-span-2" label="Título Principal (Tela Inicial)" name="mainTitle" value={localSettings.mainTitle || ''} onChange={handleSimpleChange} />
-                        <Input containerClassName="md:col-span-2" label="Subtítulo (Tela Inicial)" name="mainSubtitle" value={localSettings.mainSubtitle || ''} onChange={handleSimpleChange} />
+                        <Input label="Nome da Empresa (para painéis)" name="companyName" value={localSettings.companyName} onChange={(e) => handleSimpleChange(e)} />
+                        <Input label="Chave PIX Padrão" name="pixKey" value={localSettings.pixKey} onChange={(e) => handleSimpleChange(e)} />
+                        <Input containerClassName="md:col-span-2" label="Título Principal (Tela Inicial)" name="mainTitle" value={localSettings.mainTitle || ''} onChange={(e) => handleSimpleChange(e)} />
+                        <Input containerClassName="md:col-span-2" label="Subtítulo (Tela Inicial)" name="mainSubtitle" value={localSettings.mainSubtitle || ''} onChange={(e) => handleSimpleChange(e)} />
                     </div>
                      <fieldset className="mt-4 border p-4 rounded-md dark:border-gray-600">
                         <legend className="px-2 font-semibold">Endereço da Empresa</legend>
@@ -155,15 +188,29 @@ const SettingsView: React.FC<SettingsViewProps> = ({ appContext }) => {
                         </div>
                     </fieldset>
                 </div>
+                
+                 {/* Automations */}
+                <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+                    <h3 className="text-xl font-semibold mb-4">Automações</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <Input 
+                            label="Gerar sugestão de reposição quando estoque for menor ou igual a (unidades)" 
+                            name="replenishmentStockThreshold" 
+                            type="number" 
+                            value={localSettings.automation.replenishmentStockThreshold} 
+                            onChange={(e) => handleSimpleChange(e, 'automation')} 
+                        />
+                    </div>
+                </div>
 
                 {/* Pricing */}
                 <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
                     <h3 className="text-xl font-semibold mb-4">Precificação</h3>
                      <div className="grid md:grid-cols-4 gap-4 mb-4">
-                         <Input label="Valor por KM" type="number" value={localSettings.pricing.perKm} onChange={(e) => handleInputChange(e, 'pricing', 'perKm')} />
-                         <Input label="Taxa Água de Poço" type="number" value={localSettings.pricing.wellWaterFee} onChange={(e) => handleInputChange(e, 'pricing', 'wellWaterFee')} />
-                         <Input label="Taxa de Produtos" type="number" value={localSettings.pricing.productsFee} onChange={(e) => handleInputChange(e, 'pricing', 'productsFee')} />
-                         <Input label="Desconto VIP (%)" type="number" value={localSettings.pricing.vipDiscountPercent} onChange={(e) => handleInputChange(e, 'pricing', 'vipDiscountPercent')} />
+                         <Input label="Valor por KM" name="perKm" type="number" value={localSettings.pricing.perKm} onChange={(e) => handleSimpleChange(e, 'pricing')} />
+                         <Input label="Taxa Água de Poço" name="wellWaterFee" type="number" value={localSettings.pricing.wellWaterFee} onChange={(e) => handleSimpleChange(e, 'pricing')} />
+                         <Input label="Taxa de Produtos" name="productsFee" type="number" value={localSettings.pricing.productsFee} onChange={(e) => handleSimpleChange(e, 'pricing')} />
+                         <Input label="Desconto VIP (%)" name="vipDiscountPercent" type="number" value={localSettings.pricing.vipDiscountPercent} onChange={(e) => handleSimpleChange(e, 'pricing')} />
                     </div>
                     <h4 className="font-semibold mt-6 mb-2">Faixas de Preço por Volume</h4>
                     {localSettings.pricing.volumeTiers.map((tier, index) => (
@@ -193,15 +240,28 @@ const SettingsView: React.FC<SettingsViewProps> = ({ appContext }) => {
                         <ToggleSwitch label="Ativar Plano de Adiantamento" enabled={localSettings.features.advancePaymentPlanEnabled} onChange={() => handleToggle('advancePaymentPlanEnabled')} />
                     </div>
                 </div>
+
+                {/* My Account */}
+                <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+                    <h3 className="text-xl font-semibold mb-4">Minha Conta</h3>
+                     <form onSubmit={handlePasswordChange} className="space-y-4">
+                        <h4 className="font-semibold">Alterar Senha</h4>
+                        <div className="grid md:grid-cols-3 gap-4 items-end">
+                             <Input label="Nova Senha" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} containerClassName="mb-0" />
+                             <Input label="Confirmar Nova Senha" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} containerClassName="mb-0" />
+                             <Button type="submit" isLoading={isSavingPassword}>Salvar Nova Senha</Button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     );
 };
 
-const PlanEditor = ({ title, planKey, plan, onBenefitChange, addBenefit, removeBenefit, setLocalSettings }) => {
+const PlanEditor = ({ title, planKey, plan, onBenefitChange, addBenefit, removeBenefit, setLocalSettings }: any) => {
     
-    const handleTitleChange = (e) => {
-        setLocalSettings(prev => ({...prev, plans: {...prev.plans, [planKey]: {...prev.plans[planKey], title: e.target.value}}}));
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setLocalSettings((prev: Settings | null) => ({...prev!, plans: {...prev!.plans, [planKey]: {...prev!.plans[planKey], title: e.target.value}}}));
     };
 
     return (
@@ -209,7 +269,7 @@ const PlanEditor = ({ title, planKey, plan, onBenefitChange, addBenefit, removeB
             <h3 className="text-xl font-semibold mb-4">{title}</h3>
             <Input label="Título do Plano" value={plan.title} onChange={handleTitleChange} />
             <h4 className="font-semibold mt-4 mb-2">Benefícios</h4>
-            {plan.benefits.map((benefit, index) => (
+            {plan.benefits.map((benefit: string, index: number) => (
                 <div key={index} className="flex items-center gap-2 mb-2">
                     <Input label="" value={benefit} onChange={(e) => onBenefitChange(planKey, index, e.target.value)} containerClassName="flex-grow mb-0" />
                     <Button variant="danger" size="sm" onClick={() => removeBenefit(planKey, index)}><TrashIcon className="w-4 h-4"/></Button>

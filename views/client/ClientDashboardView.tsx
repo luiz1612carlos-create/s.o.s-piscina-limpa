@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { AuthContextType, AppContextType, Client } from '../../types';
+import { AuthContextType, AppContextType, Client, ReplenishmentQuote, Order } from '../../types';
 import { Card, CardContent, CardHeader } from '../../components/Card';
 import { Spinner } from '../../components/Spinner';
 import { Button } from '../../components/Button';
@@ -13,8 +13,8 @@ interface ClientDashboardViewProps {
 }
 
 const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({ authContext, appContext }) => {
-    const { changePassword, showNotification } = authContext;
-    const { getClientData, settings, routes } = appContext;
+    const { user, changePassword, showNotification } = authContext;
+    const { getClientData, settings, routes, replenishmentQuotes, updateReplenishmentQuoteStatus, createOrder } = appContext;
     const [clientData, setClientData] = useState<Client | null>(null);
     const [loading, setLoading] = useState(true);
     
@@ -43,6 +43,11 @@ const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({ authContext, 
         }
         return null;
     }, [clientData, routes]);
+
+    const pendingQuote = useMemo(() => {
+        if (!clientData || !replenishmentQuotes) return null;
+        return replenishmentQuotes.find(q => q.clientId === clientData.id && q.status === 'sent');
+    }, [clientData, replenishmentQuotes]);
 
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,6 +90,9 @@ const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({ authContext, 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
+                
+                {pendingQuote && <ReplenishmentCard quote={pendingQuote} client={clientData} updateStatus={updateReplenishmentQuoteStatus} createOrder={createOrder} showNotification={showNotification}/>}
+
                 {/* Pool Status */}
                 <Card>
                     <CardHeader><h3 className="text-xl font-semibold">Status Atual da Piscina</h3></CardHeader>
@@ -163,7 +171,7 @@ const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({ authContext, 
                                 </div>
                                 <div className="text-right">
                                      <p className="font-bold text-lg">{item.quantity}</p>
-                                     {item.quantity <= 2 && <p className="text-xs text-red-500 font-semibold">Reposição recomendada</p>}
+                                     {item.quantity <= (settings?.automation.replenishmentStockThreshold || 2) && <p className="text-xs text-red-500 font-semibold">Reposição recomendada</p>}
                                 </div>
                             </div>
                         )) : <p>Nenhum produto em seu estoque.</p>}
@@ -173,5 +181,66 @@ const ClientDashboardView: React.FC<ClientDashboardViewProps> = ({ authContext, 
         </div>
     );
 };
+
+const ReplenishmentCard = ({ quote, client, updateStatus, createOrder, showNotification }: { quote: ReplenishmentQuote, client: Client, updateStatus: any, createOrder: any, showNotification: any }) => {
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const handleApprove = async () => {
+        setIsProcessing(true);
+        try {
+            await updateStatus(quote.id, 'approved');
+            const newOrder: Omit<Order, 'id' | 'createdAt'> = {
+                clientId: client.uid || client.id,
+                clientName: client.name,
+                items: quote.items,
+                total: quote.total,
+                status: 'Pendente',
+            };
+            await createOrder(newOrder);
+            showNotification('Pedido de reposição criado com sucesso!', 'success');
+        } catch (error: any) {
+            showNotification(error.message || 'Erro ao aprovar sugestão.', 'error');
+            setIsProcessing(false);
+        }
+        // No finally block, as component will unmount on success
+    };
+
+    const handleReject = async () => {
+        setIsProcessing(true);
+        try {
+            await updateStatus(quote.id, 'rejected');
+            showNotification('Sugestão de reposição recusada.', 'info');
+        } catch (error: any) {
+            showNotification(error.message || 'Erro ao recusar sugestão.', 'error');
+            setIsProcessing(false);
+        }
+    };
+
+    return (
+        <Card className="border-2 border-primary-500 bg-primary-50 dark:bg-primary-900/20">
+            <CardHeader>
+                <h3 className="text-xl font-semibold text-primary-700 dark:text-primary-300">Sugestão de Reposição de Estoque</h3>
+            </CardHeader>
+            <CardContent>
+                <p className="mb-4">Notamos que alguns dos seus produtos estão acabando. Gostaria de aprovar este pedido de reposição?</p>
+                <ul className="space-y-2 mb-4">
+                    {quote.items.map(item => (
+                        <li key={item.id} className="flex justify-between p-2 bg-white dark:bg-gray-700 rounded-md">
+                            <span>{item.name} x {item.quantity}</span>
+                            <span className="font-semibold">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                        </li>
+                    ))}
+                </ul>
+                <div className="text-right font-bold text-xl">
+                    Total: R$ {quote.total.toFixed(2)}
+                </div>
+            </CardContent>
+            <div className="p-4 flex justify-end gap-4">
+                <Button variant="secondary" onClick={handleReject} isLoading={isProcessing}>Recusar</Button>
+                <Button onClick={handleApprove} isLoading={isProcessing}>Aprovar e Criar Pedido</Button>
+            </div>
+        </Card>
+    )
+}
 
 export default ClientDashboardView;

@@ -14,7 +14,7 @@ interface ClientLayoutProps {
 type ClientView = 'dashboard' | 'shop';
 
 const ClientLayout: React.FC<ClientLayoutProps> = ({ authContext, appContext }) => {
-    const { user, logout } = authContext;
+    const { userData, logout } = authContext;
     const { theme, toggleTheme } = useTheme();
     const [currentView, setCurrentView] = useState<ClientView>('dashboard');
 
@@ -55,7 +55,7 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ authContext, appContext }) 
                         </nav>
                     </div>
                     <div className="flex items-center space-x-3">
-                        <span className="text-sm hidden sm:inline">Olá, {user?.email}</span>
+                        <span className="text-sm hidden sm:inline">Olá, {userData?.name || userData?.email}</span>
                         <button onClick={toggleTheme} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">
                             {theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
                         </button>

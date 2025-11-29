@@ -1,28 +1,28 @@
 
 import React, { useState } from 'react';
-import { AuthContextType, AppContextType } from '../../types';
-import { MoonIcon, SunIcon, LogoutIcon, UsersIcon, RouteIcon, CheckBadgeIcon, StoreIcon, SettingsIcon } from '../../constants';
+import { AuthContextType, AppContextType, AdminView } from '../../types';
+import { MoonIcon, SunIcon, LogoutIcon, UsersIcon, RouteIcon, CheckBadgeIcon, StoreIcon, SettingsIcon, ChartBarIcon } from '../../constants';
 import { useTheme } from '../../hooks/useTheme';
 import ClientsView from './ClientsView';
 import RoutesView from './RoutesView';
 import ApprovalsView from './ApprovalsView';
 import StoreAdminView from './StoreAdminView';
 import SettingsView from './SettingsView';
+import ReportsView from './ReportsView';
 
 interface AdminLayoutProps {
     authContext: AuthContextType;
     appContext: AppContextType;
 }
 
-type AdminView = 'clients' | 'routes' | 'approvals' | 'store' | 'settings';
-
 const AdminLayout: React.FC<AdminLayoutProps> = ({ authContext, appContext }) => {
-    const { user } = authContext;
+    const { userData, logout } = authContext;
     const { theme, toggleTheme } = useTheme();
-    const [currentView, setCurrentView] = useState<AdminView>('approvals');
+    const [currentView, setCurrentView] = useState<AdminView>('reports');
 
     const menuItems = [
-        { id: 'approvals', label: 'Aprovações', icon: CheckBadgeIcon, count: appContext.preBudgets.length },
+        { id: 'reports', label: 'Relatórios', icon: ChartBarIcon },
+        { id: 'approvals', label: 'Aprovações', icon: CheckBadgeIcon, count: appContext.preBudgets.filter(b => b.status === 'pending').length },
         { id: 'clients', label: 'Clientes', icon: UsersIcon },
         { id: 'routes', label: 'Rotas', icon: RouteIcon },
         { id: 'store', label: 'Loja', icon: StoreIcon },
@@ -31,12 +31,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ authContext, appContext }) =>
     
     const renderView = () => {
         switch (currentView) {
+            case 'reports': return <ReportsView appContext={appContext} />;
             case 'clients': return <ClientsView appContext={appContext} />;
             case 'routes': return <RoutesView appContext={appContext} />;
             case 'approvals': return <ApprovalsView appContext={appContext} />;
             case 'store': return <StoreAdminView appContext={appContext} />;
-            case 'settings': return <SettingsView appContext={appContext} />;
-            default: return <ApprovalsView appContext={appContext} />;
+            case 'settings': return <SettingsView appContext={appContext} authContext={authContext} />;
+            default: return <ReportsView appContext={appContext} />;
         }
     };
 
@@ -69,11 +70,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ authContext, appContext }) =>
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Header */}
                 <header className="bg-white dark:bg-gray-800 shadow-sm p-4 flex justify-end items-center space-x-4">
-                    <span className="text-sm text-gray-600 dark:text-gray-300">Bem-vindo, {user?.email}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Bem-vindo, {userData?.name || userData?.email}</span>
                      <button onClick={toggleTheme} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">
                         {theme === 'dark' ? <SunIcon className="w-6 h-6" /> : <MoonIcon className="w-6 h-6" />}
                     </button>
-                    <button onClick={authContext.logout} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <button onClick={logout} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">
                         <LogoutIcon className="w-6 h-6" />
                     </button>
                 </header>
