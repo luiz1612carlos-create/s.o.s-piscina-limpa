@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { db, firebase, auth } from '../firebase';
 import {
@@ -8,6 +7,8 @@ import {
 
 const defaultSettings: Settings = {
     companyName: "AquaManager Pro",
+    mainTitle: "AquaManager Pro",
+    mainSubtitle: "Sua solução completa para gerenciamento de piscinas.",
     baseAddress: {
         street: "Rua Principal",
         number: "123",

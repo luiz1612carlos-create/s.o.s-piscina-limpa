@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
@@ -66,8 +65,8 @@ const App: React.FC = () => {
                 <div className="absolute top-4 right-4"><ThemeToggle /></div>
                 <div className="w-full max-w-4xl mx-auto">
                     <header className="text-center mb-8">
-                        <h1 className="text-4xl md:text-5xl font-bold text-primary-600 dark:text-primary-400">AquaManager Pro</h1>
-                        <p className="text-gray-600 dark:text-gray-300 mt-2">Sua solução completa para gerenciamento de piscinas.</p>
+                        <h1 className="text-4xl md:text-5xl font-bold text-primary-600 dark:text-primary-400">{appData.settings?.mainTitle || 'AquaManager Pro'}</h1>
+                        <p className="text-gray-600 dark:text-gray-300 mt-2">{appData.settings?.mainSubtitle || 'Sua solução completa para gerenciamento de piscinas.'}</p>
                     </header>
                     <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-lg overflow-hidden">
                         <div className="flex border-b border-gray-200 dark:border-gray-700">

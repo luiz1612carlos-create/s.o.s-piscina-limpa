@@ -10,7 +10,7 @@ interface SetupViewProps {
 }
 
 const SetupView: React.FC<SetupViewProps> = ({ appContext }) => {
-    const { createInitialAdmin, showNotification } = appContext;
+    const { createInitialAdmin, showNotification, settings } = appContext;
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +38,7 @@ const SetupView: React.FC<SetupViewProps> = ({ appContext }) => {
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                  <header className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-primary-600 dark:text-primary-400">AquaManager Pro</h1>
+                    <h1 className="text-4xl font-bold text-primary-600 dark:text-primary-400">{settings?.companyName || 'AquaManager Pro'}</h1>
                 </header>
                 <Card>
                     <CardHeader>

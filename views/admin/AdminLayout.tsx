@@ -17,7 +17,7 @@ interface AdminLayoutProps {
 type AdminView = 'clients' | 'routes' | 'approvals' | 'store' | 'settings';
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ authContext, appContext }) => {
-    const { user, logout } = authContext;
+    const { user } = authContext;
     const { theme, toggleTheme } = useTheme();
     const [currentView, setCurrentView] = useState<AdminView>('approvals');
 
@@ -45,7 +45,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ authContext, appContext }) =>
             {/* Sidebar */}
             <aside className="w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col">
                 <div className="p-4 border-b dark:border-gray-700">
-                    <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">AquaManager Pro</h1>
+                    <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">{appContext.settings?.companyName || 'AquaManager Pro'}</h1>
                     <p className="text-sm text-gray-500">Painel Admin</p>
                 </div>
                 <nav className="flex-1 p-4 space-y-2">
@@ -73,7 +73,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ authContext, appContext }) =>
                      <button onClick={toggleTheme} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">
                         {theme === 'dark' ? <SunIcon className="w-6 h-6" /> : <MoonIcon className="w-6 h-6" />}
                     </button>
-                    <button onClick={logout} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <button onClick={authContext.logout} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">
                         <LogoutIcon className="w-6 h-6" />
                     </button>
                 </header>

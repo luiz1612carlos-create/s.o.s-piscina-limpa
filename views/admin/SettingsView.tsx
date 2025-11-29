@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppContextType, Settings } from '../../types';
 import { Button } from '../../components/Button';
@@ -127,10 +126,12 @@ const SettingsView: React.FC<SettingsViewProps> = ({ appContext }) => {
             <div className="space-y-8">
                 {/* Company Info */}
                 <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-                    <h3 className="text-xl font-semibold mb-4">Informações da Empresa</h3>
+                    <h3 className="text-xl font-semibold mb-4">Informações da Empresa e Tela Inicial</h3>
                     <div className="grid md:grid-cols-2 gap-4">
-                        <Input label="Nome da Empresa" name="companyName" value={localSettings.companyName} onChange={handleSimpleChange} />
-                        <Input label="Chave PIX" name="pixKey" value={localSettings.pixKey} onChange={handleSimpleChange} />
+                        <Input label="Nome da Empresa (para painéis)" name="companyName" value={localSettings.companyName} onChange={handleSimpleChange} />
+                        <Input label="Chave PIX Padrão" name="pixKey" value={localSettings.pixKey} onChange={handleSimpleChange} />
+                        <Input containerClassName="md:col-span-2" label="Título Principal (Tela Inicial)" name="mainTitle" value={localSettings.mainTitle || ''} onChange={handleSimpleChange} />
+                        <Input containerClassName="md:col-span-2" label="Subtítulo (Tela Inicial)" name="mainSubtitle" value={localSettings.mainSubtitle || ''} onChange={handleSimpleChange} />
                     </div>
                      <fieldset className="mt-4 border p-4 rounded-md dark:border-gray-600">
                         <legend className="px-2 font-semibold">Endereço da Empresa</legend>

@@ -40,7 +40,7 @@ const ClientLayout: React.FC<ClientLayoutProps> = ({ authContext, appContext }) 
             <header className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-10">
                 <div className="container mx-auto px-4 py-3 flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-xl font-bold text-primary-600 dark:text-primary-400">AquaManager Pro</h1>
+                        <h1 className="text-xl font-bold text-primary-600 dark:text-primary-400">{appContext.settings?.companyName || 'AquaManager Pro'}</h1>
                         <nav className="hidden md:flex items-center gap-2">
                             {navItems.map(item => !item.disabled && (
                                 <button

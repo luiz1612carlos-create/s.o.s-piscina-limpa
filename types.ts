@@ -1,4 +1,3 @@
-
 export interface UserData {
     uid: string;
     email: string;
@@ -117,6 +116,8 @@ export interface Order {
 
 export interface Settings {
     companyName: string;
+    mainTitle: string;
+    mainSubtitle: string;
     baseAddress: Address;
     pixKey: string;
     pricing: {
